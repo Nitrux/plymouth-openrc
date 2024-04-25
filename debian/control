@@ -1,0 +1,17 @@
+Source: plymouth-openrc
+Section: misc
+Priority: important
+Maintainer: Uri Herrera <uri_herrera@nxos.org>
+Build-Depends: debhelper (>=9)
+Standards-Version: 3.9.6
+Homepage: http://nxos.org
+
+
+Package: plymouth-openrc
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, openrc, plymouth
+Conflicts: systemd, systemd-sysv
+Description: Package to add Plymouth configuration for OpenRC.
+ This package will add the boot scripts to use plymouth
+ with OpenRC in Nitrux.
+
