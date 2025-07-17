@@ -1,63 +1,34 @@
 #!/sbin/openrc-run
+# Copyright (c) 2007-2021 The Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
 
-# Service details
-name="Plymouth"
-description="Manage the Plymouth boot splash screen"
-
-# Configuration and state
+description="Manages the Plymouth boot splash screen"
 command="/usr/sbin/plymouthd"
-pidfile="/run/plymouth.pid"
+command_background="yes"
+pidfile="/run/plymouth/pid"
 
 depend() {
-    need mountall
-    after bootmisc
-    keyword -shutdown
+	# Plymouth needs /dev and udev to be ready to interact with the framebuffer.
+	need dev
+	need udev
+	# '-shutdown' ensures this service is not stopped during shutdown,
+	# allowing its custom stop() logic to control the screen instead.
+	keyword -shutdown
 }
 
 start_pre() {
-    SPLASH="true"
-    for ARGUMENT in $(cat /proc/cmdline); do
-        case "${ARGUMENT}" in
-            nosplash*|plymouth.enable=0)
-                SPLASH="false"
-                ;;
-        esac
-    done
-
-    if [ "${SPLASH}" = "false" ]; then
-        einfo "Plymouth splash disabled via kernel command line."
-        return 1
-    fi
-
-    if [ ! -x "${command}" ]; then
-        eerror "${command} is not executable"
-        return 1
-    fi
-}
-
-start() {
-    ebegin "Starting Plymouth splash"
-    start-stop-daemon --start --exec ${command} --pidfile ${pidfile} --background
-    eend $?
+	# Check kernel command line to see if splash is disabled.
+	if grep -q -w 'nosplash\|plymouth.enable=0' /proc/cmdline; then
+		einfo "Plymouth splash disabled via kernel command line."
+		# Return a non-zero status to prevent the start() action.
+		return 1
+	fi
 }
 
 stop() {
-    ebegin "Stopping Plymouth splash"
-    if plymouth --ping; then
-        /usr/bin/plymouth quit --retain-splash
-    else
-        /usr/sbin/plymouthd --mode=shutdown
-        RUNLEVEL="$(/sbin/runlevel | cut -d " " -f 2)"
-        case "${RUNLEVEL}" in
-            0)
-                TEXT="Shutting down system..."
-                ;;
-            6)
-                TEXT="Restarting system..."
-                ;;
-        esac
-        /usr/bin/plymouth message --text="${TEXT}"
-        /usr/bin/plymouth --show-splash
-    fi
-    eend $?
+	# This is not a standard stop action; it tells Plymouth to quit.
+	# The 'plymouth quit' command handles a graceful exit.
+	ebegin "Quitting Plymouth"
+	plymouth quit
+	eend $?
 }
