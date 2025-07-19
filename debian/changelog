@@ -1,5 +1,11 @@
 plymouth-openrc (0.0.2)  nitrux; urgency=medium
 
+  * Use supervise-daemon for daemons.
+
+ -- Uri Herrera <uri_herrera@nxos.org>  Sat, 19 Jul 2025 03:16:00 -0500
+
+plymouth-openrc (0.0.2)  nitrux; urgency=medium
+
   * Refactor and rename service files.
 
  -- Uri Herrera <uri_herrera@nxos.org>  Thu, 17 Jul 2025 16:58:00 -0500

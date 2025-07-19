@@ -2,30 +2,22 @@
 
 description="Manages the Plymouth boot splash screen"
 command="/usr/sbin/plymouthd"
-command_background="yes"
-pidfile="/run/plymouth/pid"
+command_args="--no-daemon"
+supervisor=supervise-daemon
 
 depend() {
-	# Plymouth needs /dev and udev to be ready to interact with the framebuffer.
-	need dev
-	need udev
-	# '-shutdown' ensures this service is not stopped during shutdown,
-	# allowing its custom stop() logic to control the screen instead.
+	need dev udev
 	keyword -shutdown
 }
 
 start_pre() {
-	# Check kernel command line to see if splash is disabled.
-	if grep -q -w 'nosplash\|plymouth.enable=0' /proc/cmdline; then
+	if grep -qwE 'nosplash|plymouth.enable=0' /proc/cmdline; then
 		einfo "Plymouth splash disabled via kernel command line."
-		# Return a non-zero status to prevent the start() action.
 		return 1
 	fi
 }
 
 stop() {
-	# This is not a standard stop action; it tells Plymouth to quit.
-	# The 'plymouth quit' command handles a graceful exit.
 	ebegin "Quitting Plymouth"
 	plymouth quit
 	eend $?
